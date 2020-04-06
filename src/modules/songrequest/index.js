@@ -1,4 +1,4 @@
-(module => {
+((module) => {
     const path = require('path');
 
     const db = require('../../lib/db');
@@ -14,22 +14,22 @@
 
         // Routes
         app.get('/songrequest/songs', (req, res) =>
-            res.render(path.join(__dirname, 'views', 'songs.jade'))
+            res.render(path.join(__dirname, 'views', 'songs.pug'))
         );
         app.get('/songrequest/player', (req, res) =>
-            res.render(path.join(__dirname, 'views', 'player.jade'))
+            res.render(path.join(__dirname, 'views', 'player.pug'))
         );
         app.get('/songrequest/obs', (req, res) =>
-            res.render(path.join(__dirname, 'views', 'obs.jade'))
+            res.render(path.join(__dirname, 'views', 'obs.pug'))
         );
         app.get('/songrequest/list', (req, res) =>
-            res.render(path.join(__dirname, 'views', 'list.jade'))
+            res.render(path.join(__dirname, 'views', 'list.pug'))
         );
 
         // Socket.IO
         const io = require('socket.io').listen(server);
 
-        io.on('connection', socket => {
+        io.on('connection', (socket) => {
             console.log('SongRequest: Client connected');
 
             // Return the full list of queued songs
@@ -56,10 +56,7 @@
                     .value()[0];
 
                 if (song === undefined) {
-                    song = songrequests
-                        .sortBy('sortOrder')
-                        .take(1)
-                        .value()[0];
+                    song = songrequests.sortBy('sortOrder').take(1).value()[0];
                 }
 
                 io.emit('song', JSON.stringify(song));
@@ -68,7 +65,7 @@
                     .find(song)
                     .assign({
                         isNew: false,
-                        sortOrder: songrequests.size().value() + 1
+                        sortOrder: songrequests.size().value() + 1,
                     })
                     .write();
 
@@ -119,7 +116,7 @@
                         .find(song)
                         .assign({
                             isNew: false,
-                            sortOrder: songrequests.size().value() + 1
+                            sortOrder: songrequests.size().value() + 1,
                         })
                         .write();
 
@@ -142,7 +139,7 @@
                     if ((match = link.match(YT_VID_REGEX))) {
                         const YT_VID = match[1];
 
-                        youtubeInfo(YT_VID).then(video => {
+                        youtubeInfo(YT_VID).then((video) => {
                             if (
                                 !songrequests
                                     .find({ vid: YT_VID, type: 'youtube' })
@@ -156,7 +153,7 @@
                                     title: video.title,
                                     user: user['display-name'],
                                     isNew: true,
-                                    sortOrder: sortOrder
+                                    sortOrder: sortOrder,
                                 };
                                 songrequests.push(song).write();
                                 client.say(
