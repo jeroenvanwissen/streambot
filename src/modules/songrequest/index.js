@@ -4,7 +4,7 @@
     const db = require('../../lib/db');
     const pubsub = require('../../lib/pubsub');
 
-    const youtubeInfo = require('youtube-info');
+    const youtubeInfo = require('../../lib/youtube').getInfo;
     const YT_VID_REGEX = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
     const songrequests = db.get('songrequest.songs');
@@ -139,12 +139,14 @@
                     if ((match = link.match(YT_VID_REGEX))) {
                         const YT_VID = match[1];
 
-                        youtubeInfo(YT_VID).then((video) => {
-                            if (
-                                !songrequests
-                                    .find({ vid: YT_VID, type: 'youtube' })
-                                    .value()
-                            ) {
+                        if (
+                            !songrequests
+                                .find({ vid: YT_VID, type: 'youtube' })
+                                .value()
+                        ) {
+                            youtubeInfo(YT_VID).then((response) => {
+                                const video = response.data.items[0].snippet;
+
                                 const sortOrder =
                                     songrequests.size().value() + 1;
                                 const song = {
@@ -172,8 +174,8 @@
                                             .value()
                                     );
                                 io.emit('list', JSON.stringify(songs));
-                            }
-                        });
+                            });
+                        }
                     }
                 } else {
                     client.say(

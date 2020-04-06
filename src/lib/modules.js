@@ -1,4 +1,4 @@
-(module => {
+((module) => {
     const fs = require('fs');
     const path = require('path');
 
@@ -25,6 +25,6 @@
     };
 
     module.exports = {
-        loadModules
+        loadModules,
     };
 })(module);

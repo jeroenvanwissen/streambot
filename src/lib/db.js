@@ -1,4 +1,4 @@
-(module => {
+((module) => {
     const low = require('lowdb');
     const FileSync = require('lowdb/adapters/FileSync');
     // const {encrypt, decrypt} = require('./encryption');
@@ -11,7 +11,7 @@
         const db = low(adapter);
 
         db.defaults({
-            version: process.env.npm_package_version
+            version: process.env.npm_package_version,
         }).write();
 
         return db;
