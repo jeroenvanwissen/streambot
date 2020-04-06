@@ -1,0 +1,6 @@
+TODO:
+    Fix `npm audit` issues:
+        ☐ Replace the `youtube-info` dependency with something more up-to-date @created(20-04-06 11:04)
+        ☐ Replace `jade` with `pug` ( Jade has been renamed to pug, please install the latest version of pug instead of jade ) @created(20-04-06 11:05)
+    Admin interface:
+        ☐ Build the basics @created(20-04-06 11:07)

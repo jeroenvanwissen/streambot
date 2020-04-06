@@ -1,0 +1,55 @@
+doctype html
+html
+    head
+        title Song Request - OBS
+        script(type='text/javascript' src='/socket.io/socket.io.js')
+    body
+        #player
+
+        script.
+            var socket = io();
+            //- socket.on('connect', function() {
+            //-     socket.emit('song');
+            //- });
+
+            var tag = document.createElement('script');
+
+            tag.src = 'https://www.youtube.com/iframe_api';
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            
+            var player;
+            function onYouTubeIframeAPIReady() {
+                player = new YT.Player('player', {
+                    height: '480',
+                    width: '640',
+                    events: {
+                        'onReady': onPlayerReady,
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
+
+            function onPlayerReady(event) {
+                event.target.setVolume(0);
+                socket.emit('getSong');
+                //TODO: onPlayerReady should trigger a websocket call to get the first song off the playlist and start playing.
+            }
+
+            function onPlayerStateChange(event) {
+                if (event.data == YT.PlayerState.ENDED) {
+                    socket.emit('getSong');
+                    //TODO: trigger a websocket cal to get the next song off the playlist and start playing.
+                }
+            }
+
+            socket.on('song', function(data) {
+                var song = JSON.parse(data);
+
+                player.loadVideoById(song.vid)
+                player.playVideo();
+            });
+
+            socket.on('volume', function(volume) {
+                player.setVolume(volume);
+            }) 

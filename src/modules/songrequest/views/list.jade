@@ -1,0 +1,32 @@
+doctype html
+html
+    head
+        title Song Request - List
+        script(type='text/javascript' src='/socket.io/socket.io.js')
+    body
+        h3 playing
+        #playing
+        h3 list
+        #songs
+
+        script.
+            var socket = io();
+            socket.emit('getList');
+
+            socket.on('song', function(data) {
+                var song = JSON.parse(data);
+                document.getElementById("playing").innerHTML = song.title;
+
+                socket.emit('getList');
+            });
+
+            socket.on('list', function(data) {
+                var songs = JSON.parse(data);
+
+                var ul = "<ul>"
+                for (i=0; i < songs.length; i++) {
+                    ul += "<li>" + songs[i].title + "</li>";
+                }
+                ul += "</ul>";
+                document.getElementById("songs").innerHTML = ul;
+            });
