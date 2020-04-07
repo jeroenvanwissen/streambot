@@ -3,10 +3,13 @@ TODO:
         ✔ Replace the `youtube-info` dependency with something more up-to-date @created(20-04-06 11:04) @done(20-04-06 12:10)
         ✔ Replace `jade` with `pug` ( Jade has been renamed to pug, please install the latest version of pug instead of jade ) @created(20-04-06 11:05) @done(20-04-06 11:27)
     Twitch Integration:
+        ☐ Add uptime tracking @created(20-04-07 17:21)
+        ☐ Add actions like reacting to follow, subscriptions, bits etc @created(20-04-07 17:23)
     Song Request:
         ☐ Create a small playing now & next tracker @created(20-04-07 16:40)
     Chat Commands:
         ☐ Needs webinterface @created(20-04-07 16:43)
+        ☐ Add periodic messages @created(20-04-07 17:22)
     Admin interface:
         ☐ Build the basics @created(20-04-06 11:07)
     Discord Integration:
