@@ -10,6 +10,7 @@ TODO:
     Admin interface:
         ☐ Build the basics @created(20-04-06 11:07)
     Discord Integration:
-        ☐ Have a look at https://github.com/discordjs/discord.js/ to start @created(20-04-06 18:24)
+        ✔ Have a look at https://github.com/discordjs/discord.js/ to start @created(20-04-06 18:24) @done(20-04-07 17:19)
+        ☐ Build basic set of commands usefull for discord integration @created(20-04-07 17:20)
     Electron:
         ☐ Integrate everyting into a standalone electron based application @created(20-04-07 16:41)
