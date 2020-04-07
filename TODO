@@ -2,7 +2,14 @@ TODO:
     Fix `npm audit` issues:
         ✔ Replace the `youtube-info` dependency with something more up-to-date @created(20-04-06 11:04) @done(20-04-06 12:10)
         ✔ Replace `jade` with `pug` ( Jade has been renamed to pug, please install the latest version of pug instead of jade ) @created(20-04-06 11:05) @done(20-04-06 11:27)
+    Twitch Integration:
+    Song Request:
+        ☐ Create a small playing now & next tracker @created(20-04-07 16:40)
+    Chat Commands:
+        ☐ Needs webinterface @created(20-04-07 16:43)
     Admin interface:
         ☐ Build the basics @created(20-04-06 11:07)
     Discord Integration:
         ☐ Have a look at https://github.com/discordjs/discord.js/ to start @created(20-04-06 18:24)
+    Electron:
+        ☐ Integrate everyting into a standalone electron based application @created(20-04-07 16:41)
