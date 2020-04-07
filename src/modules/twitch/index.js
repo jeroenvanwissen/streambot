@@ -1,22 +1,22 @@
-(module => {
+((module) => {
     const TMI = require('tmi.js');
     const db = require('../../lib/db');
     const pubsub = require('../../lib/pubsub');
 
-    module.exports = app => {
+    module.exports = (app) => {
         console.log('Module: Twitch');
 
         const options = {
             options: { debug: true },
             connection: {
                 reconnect: true,
-                secure: true
+                secure: true,
             },
             identity: {
                 username: process.env.TWITCH_USERNAME,
-                password: process.env.TWITCH_PASSWORD
+                password: process.env.TWITCH_PASSWORD,
             },
-            channels: process.env.TWITCH_CHANNEL.split(',')
+            channels: process.env.TWITCH_CHANNEL.split(','),
         };
 
         const client = new TMI.Client(options);
@@ -32,9 +32,16 @@
                     client,
                     channel,
                     user,
-                    message
+                    message,
                 });
             }
+
+            // if (message.startsWith('!discord')) {
+            //     client.say(
+            //         channel,
+            //         `Join my personal discord to chat outside streaming hours: https://discord.gg/rC6YJbN`
+            //     );
+            // }
         };
 
         const onConnectedHandler = (addr, port) =>

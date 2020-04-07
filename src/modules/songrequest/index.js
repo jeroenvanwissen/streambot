@@ -1,15 +1,12 @@
 ((module) => {
     const path = require('path');
 
-    const db = require('../../lib/db');
     const pubsub = require('../../lib/pubsub');
+    const youtube = require('../../lib/youtube');
 
-    const youtubeInfo = require('../../lib/youtube').getInfo;
-    const YT_VID_REGEX = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const songsDb = require('./lib/songsDb');
 
-    const songrequests = db.get('songrequest.songs');
-
-    module.exports = (app, server) => {
+    module.exports = async (app, server) => {
         console.log('Module: SongRequest');
 
         // Routes
@@ -34,156 +31,103 @@
 
             // Return the full list of queued songs
             socket.on('getList', () => {
-                const songs = songrequests
-                    .filter({ isNew: true })
-                    .sortBy('sortOrder')
-                    .value()
-                    .concat(
-                        songrequests
-                            .filter({ isNew: false })
-                            .sortBy('sortOrder')
-                            .value()
-                    );
-                io.emit('list', JSON.stringify(songs));
+                io.emit('list', JSON.stringify(songsDb.list()));
             });
 
             // Return the first song to be played
             socket.on('getSong', () => {
-                let song = songrequests
-                    .filter({ isNew: true })
-                    .sortBy('sortOrder')
-                    .take(1)
-                    .value()[0];
-
-                if (song === undefined) {
-                    song = songrequests.sortBy('sortOrder').take(1).value()[0];
-                }
-
+                const song = songsDb.getSong();
                 io.emit('song', JSON.stringify(song));
 
-                songrequests
-                    .find(song)
-                    .assign({
-                        isNew: false,
-                        sortOrder: songrequests.size().value() + 1,
-                    })
-                    .write();
-
-                const songs = songrequests.sortBy('sortOrder').value();
-                const sortedSongs = songs.map((song, index) => {
-                    song.sortOrder = index + 1;
-                    return song;
-                });
-
-                // // Write resorted list of songs to database
-                db.set('songrequest.songs', sortedSongs).write();
+                songsDb.moveDownTheList(song);
+                songsDb.resortList();
             });
         });
 
         // Events
-        pubsub.on('twitch:command', ({ client, channel, user, message }) => {
-            if (user['display-name'] == process.env.TWITCH_USERNAME) {
-                // !volume command
-                if (message.startsWith('!volume')) {
-                    const volume = message.split(' ')[1];
-                    io.emit('volume', volume);
+        pubsub.on(
+            'twitch:command',
+            async ({ client, channel, user, message }) => {
+                //TODO: Change the `display-name` check to a db mods lookup list
+                if (user['display-name'] == process.env.TWITCH_USERNAME) {
+                    // !volume / !vol
+                    if (
+                        message.startsWith('!volume') ||
+                        message.startsWith('!vol')
+                    ) {
+                        const [command, volume] = message.split(' ');
+                        io.emit('volume', volume);
 
-                    client.say(channel, `Music volume set to ${volume}`);
-                }
-
-                // !nextsong
-                if (message.startsWith('!nextsong')) {
-                    let song = songrequests
-                        .filter({ isNew: true })
-                        .sortBy('sortOrder')
-                        .take(1)
-                        .value()[0];
-
-                    if (song === undefined) {
-                        song = songrequests
-                            .sortBy('sortOrder')
-                            .take(1)
-                            .value()[0];
+                        client.say(channel, `Music volume set to ${volume}`);
                     }
 
-                    io.emit('song', JSON.stringify(song));
-                    client.say(
-                        channel,
-                        `Now playing ${song.title} added by ${song.user}`
-                    );
+                    // !nextsong / !ns
+                    if (
+                        message.startsWith('!nextsong') ||
+                        message.startsWith('!ns')
+                    ) {
+                        const song = songsDb.getSong();
+                        io.emit('song', JSON.stringify(song));
 
-                    songrequests
-                        .find(song)
-                        .assign({
-                            isNew: false,
-                            sortOrder: songrequests.size().value() + 1,
-                        })
-                        .write();
+                        client.say(
+                            channel,
+                            `Now playing ${song.title} added by ${song.user}`
+                        );
 
-                    const songs = songrequests.sortBy('sortOrder').value();
-                    const sortedSongs = songs.map((song, index) => {
-                        song.sortOrder = index + 1;
-                        return song;
-                    });
+                        songsDb.moveDownTheList(song);
+                        songsDb.resortList();
+                    }
 
-                    // // Write resorted list of songs to database
-                    db.set('songrequest.songs', sortedSongs).write();
+                    // !deletesong / !ds
+                    if (
+                        message.startsWith('!deletesong') ||
+                        message.startsWith('!ds')
+                    ) {
+                        const [command, songId] = message.split(' ');
+                        const song = songsDb.getSong(songId);
+                        songsDb.deleteSong(song);
+                        songsDb.resortList();
+
+                        client.say(
+                            channel,
+                            `${song.title} was deleted from the playlist`
+                        );
+                    }
                 }
-            }
 
-            // !sr command
-            if (message.startsWith('!sr')) {
-                const link = message.split(' ')[1];
-                if (link !== undefined) {
-                    let match;
-                    if ((match = link.match(YT_VID_REGEX))) {
-                        const YT_VID = match[1];
+                // !sr command
+                if (message.startsWith('!sr')) {
+                    const [command, link] = message.split(' ');
+                    if (link !== undefined) {
+                        let vid;
 
-                        if (
-                            !songrequests
-                                .find({ vid: YT_VID, type: 'youtube' })
-                                .value()
-                        ) {
-                            youtubeInfo(YT_VID).then((response) => {
-                                const video = response.data.items[0].snippet;
+                        if ((vid = youtube.getVideoId(link))) {
+                            if (!songsDb.getByVideoId(vid, 'youtube')) {
+                                const video = await youtube.getVideoInfo(link);
 
-                                const sortOrder =
-                                    songrequests.size().value() + 1;
-                                const song = {
-                                    vid: YT_VID,
+                                songsDb.addSong({
+                                    vid: vid,
                                     type: 'youtube',
                                     title: video.title,
                                     user: user['display-name'],
-                                    isNew: true,
-                                    sortOrder: sortOrder,
-                                };
-                                songrequests.push(song).write();
+                                });
+
                                 client.say(
                                     channel,
                                     `${video.title} added to the music queue by ${user['display-name']}`
                                 );
 
-                                const songs = songrequests
-                                    .filter({ isNew: true })
-                                    .sortBy('sortOrder')
-                                    .value()
-                                    .concat(
-                                        songrequests
-                                            .filter({ isNew: false })
-                                            .sortBy('sortOrder')
-                                            .value()
-                                    );
-                                io.emit('list', JSON.stringify(songs));
-                            });
+                                io.emit('list', JSON.stringify(songsDb.list()));
+                            }
                         }
+                    } else {
+                        client.say(
+                            channel,
+                            'To request a song, use the following command: !sr [youtube link]'
+                        );
                     }
-                } else {
-                    client.say(
-                        channel,
-                        'To request a song, use the following command: !sr [youtube link]'
-                    );
                 }
             }
-        });
+        );
     };
 })(module);

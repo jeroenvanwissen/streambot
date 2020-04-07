@@ -4,3 +4,5 @@ TODO:
         ✔ Replace `jade` with `pug` ( Jade has been renamed to pug, please install the latest version of pug instead of jade ) @created(20-04-06 11:05) @done(20-04-06 11:27)
     Admin interface:
         ☐ Build the basics @created(20-04-06 11:07)
+    Discord Integration:
+        ☐ Have a look at https://github.com/discordjs/discord.js/ to start @created(20-04-06 18:24)
