@@ -50,5 +50,9 @@
         client.on('chat', onChatHandler);
         client.on('connected', onConnectedHandler);
         client.connect();
+
+        pubsub.on('twitch.action.say', ({ channel, content }) => {
+            client.say(channel, content);
+        });
     };
 })(module);
