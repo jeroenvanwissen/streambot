@@ -7,9 +7,15 @@ TODO:
         ☐ Add actions like reacting to follow, subscriptions, bits etc @created(20-04-07 17:23)
     Song Request:
         ☐ Create a small playing now & next tracker @created(20-04-07 16:40)
+        Commands to add:
+            ☐ !song - returns current playing song in the channel @created(20-04-07 17:42)
+            ☐ !next - returns next song to be played in the channel @created(20-04-07 17:43)
+            ☐ !mute - mutes the song (Mods only) @created(20-04-07 17:43)
+            ☐ !delete - without arguments deletes the current playing song from list and starts playing next song @created(20-04-07 17:44)
     Chat Commands:
         ☐ Needs webinterface @created(20-04-07 16:43)
         ☐ Add periodic messages @created(20-04-07 17:22)
+            Online interval, offline interval, chat lines, message
     Admin interface:
         ☐ Build the basics @created(20-04-06 11:07)
     Discord Integration:

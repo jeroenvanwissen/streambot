@@ -35,13 +35,6 @@
                     message,
                 });
             }
-
-            // if (message.startsWith('!discord')) {
-            //     client.say(
-            //         channel,
-            //         `Join my personal discord to chat outside streaming hours: https://discord.gg/rC6YJbN`
-            //     );
-            // }
         };
 
         const onConnectedHandler = (addr, port) =>

@@ -4,7 +4,7 @@
     //TODO: Change DB name to variable
     const commands = db.get('chatcommands.commands');
 
-    const getCommand = (cmd) => {
+    const get = (cmd) => {
         return commands.find({ cmd }).value();
     };
 
@@ -21,7 +21,7 @@
     };
 
     module.exports = {
-        getCommand,
+        get,
         addCommand,
     };
 })(module);

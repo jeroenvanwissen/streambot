@@ -6,9 +6,13 @@
         console.log('Module: Commands');
 
         pubsub.on('twitch:command', ({ client, channel, user, message }) => {
-            const [command, arguments] = message.split(' ');
-            const { cmd, action, content } = chatCommandsDb.getCommand(command);
-            pubsub.emit(action, { channel, content });
+            const [cmd, args] = message.split(' ');
+            if ((command = chatCommandsDb.get(cmd))) {
+                pubsub.emit(command.action, {
+                    channel,
+                    content: command.content,
+                });
+            }
         });
     };
 })(module);
