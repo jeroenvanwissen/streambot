@@ -29,7 +29,6 @@
 
             if (message.startsWith('!')) {
                 pubsub.emit('twitch:command', {
-                    client,
                     channel,
                     user,
                     message,

@@ -1,0 +1,40 @@
+doctype html
+html
+    head
+        link(rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap')
+        script(type='text/javascript' src='/socket.io/socket.io.js')
+        style(type='text/css').
+            body {
+                font-family: 'Roboto', sans-serif;
+            }
+            .current {
+                font-size: 20pt;
+            }
+            #current {
+                padding-left: 10px;
+                font-size: 18pt;
+            }
+            .next {
+                font-size: 20pt;
+            }
+            #next {
+                padding-left: 10px;
+                font-size: 18pt;
+            }
+    body
+        div
+            span.current currently playing:
+            span#current
+        div
+            span.next next song:
+            span#next
+
+        script.
+            var socket = io();
+            socket.emit('getCurrentNext');
+
+            socket.on('currentnext', function(data) {
+                var song = JSON.parse(data);
+                document.getElementById("current").innerHTML = song.current.title;
+                document.getElementById("next").innerHTML = song.next.title;
+            });

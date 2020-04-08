@@ -3,12 +3,16 @@ TODO:
         ✔ Replace the `youtube-info` dependency with something more up-to-date @created(20-04-06 11:04) @done(20-04-06 12:10)
         ✔ Replace `jade` with `pug` ( Jade has been renamed to pug, please install the latest version of pug instead of jade ) @created(20-04-06 11:05) @done(20-04-06 11:27)
     Twitch Integration:
+        ✔ Stop passing on the `client` object through pubsub @created(20-04-07 18:22) @done(20-04-07 18:31)
         ☐ Add uptime tracking @created(20-04-07 17:21)
+            Requires Twitch API integration, impossible to do with TMI.js
         ☐ Add actions like reacting to follow, subscriptions, bits etc @created(20-04-07 17:23)
+            Requires Twitch API integration, impossible to do with TMI.js
     Song Request:
-        ☐ Create a small playing now & next tracker @created(20-04-07 16:40)
+        ✔ Create a small playing now & next tracker @created(20-04-07 16:40) @done(20-04-07 19:55)
+        ✔ Remember the volume @created(20-04-07 19:01) @done(20-04-07 19:55)
         Commands to add:
-            ☐ !song - returns current playing song in the channel @created(20-04-07 17:42)
+            ✔ !song - returns current playing song in the channel @created(20-04-07 17:42) @done(20-04-07 18:51)
             ☐ !next - returns next song to be played in the channel @created(20-04-07 17:43)
             ☐ !mute - mutes the song (Mods only) @created(20-04-07 17:43)
             ☐ !delete - without arguments deletes the current playing song from list and starts playing next song @created(20-04-07 17:44)

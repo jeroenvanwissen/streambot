@@ -3,6 +3,18 @@
 
     //TODO: Change DB name to variable
     const songs = db.get('songrequest.songs');
+    const settings = db.get('songrequest.settings');
+
+    /**
+     * setVolume
+     *
+     * @param {*} volume
+     */
+    const setVolume = (volume) => {
+        settings.set('volume', volume).write();
+    };
+
+    const getVolume = () => settings.get('volume').value();
 
     /**
      * getByVideoId
@@ -41,6 +53,35 @@
         } else {
             return songs.find({ vid: songId }).value();
         }
+    };
+
+    /**
+     * getCurrentPlaying
+     *
+     */
+    const getCurrentPlaying = () => {
+        const song = songs.filter({ current: true }).take(1).value();
+        return song.length > 0 ? song[0] : {};
+    };
+
+    /**
+     * setCurrentPlaying
+     *
+     * @param {*} song
+     */
+    const setCurrentPlaying = (song) => {
+        songs
+            .filter({ current: true })
+            .value()
+            .forEach((song) => {
+                songs.find(song).assign({ current: false }).write();
+            });
+        songs
+            .find(song)
+            .assign({
+                current: true,
+            })
+            .write();
     };
 
     /**
@@ -88,6 +129,7 @@
         songs.remove(song).write();
     };
 
+    //TODO: Clean up a bit....
     module.exports = {
         getByVideoId,
         addSong,
@@ -96,5 +138,9 @@
         moveDownTheList,
         resortList,
         deleteSong,
+        getCurrentPlaying,
+        setCurrentPlaying,
+        setVolume,
+        getVolume,
     };
 })(module);

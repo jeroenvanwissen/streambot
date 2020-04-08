@@ -10,6 +10,9 @@
         console.log('Module: SongRequest');
 
         // Routes
+        app.get('/songrequest/currentnext', (req, res) =>
+            res.render(path.join(__dirname, 'views', 'currentnext.pug'))
+        );
         app.get('/songrequest/songs', (req, res) =>
             res.render(path.join(__dirname, 'views', 'songs.pug'))
         );
@@ -29,6 +32,13 @@
         io.on('connection', (socket) => {
             console.log('SongRequest: Client connected');
 
+            socket.on('getCurrentNext', () => {
+                const current = songsDb.getCurrentPlaying();
+                const next = songsDb.getSong();
+
+                io.emit('currentnext', JSON.stringify({ current, next }));
+            });
+
             // Return the full list of queued songs
             socket.on('getList', () => {
                 io.emit('list', JSON.stringify(songsDb.list()));
@@ -37,97 +47,123 @@
             // Return the first song to be played
             socket.on('getSong', () => {
                 const song = songsDb.getSong();
-                io.emit('song', JSON.stringify(song));
+                const volume = songsDb.getVolume();
+                io.emit('song', JSON.stringify({ song, volume }));
 
+                songsDb.setCurrentPlaying(song);
                 songsDb.moveDownTheList(song);
                 songsDb.resortList();
             });
         });
 
         // Events
-        pubsub.on(
-            'twitch:command',
-            async ({ client, channel, user, message }) => {
-                //TODO: Change the `display-name` check to a db mods lookup list
-                if (user['display-name'] == process.env.TWITCH_USERNAME) {
-                    // !volume / !vol
-                    if (
-                        message.startsWith('!volume') ||
-                        message.startsWith('!vol')
-                    ) {
-                        const [command, volume] = message.split(' ');
-                        io.emit('volume', volume);
+        pubsub.on('twitch:command', async ({ channel, user, message }) => {
+            //TODO: Change the `display-name` check to a db mods lookup list
+            if (
+                user['display-name'] == process.env.TWITCH_USERNAME ||
+                user['display-name'] == 'jeroenvanwissen'
+            ) {
+                // !volume / !vol
+                if (
+                    message.startsWith('!volume') ||
+                    message.startsWith('!vol')
+                ) {
+                    const [command, volume] = message.split(' ');
 
-                        client.say(channel, `Music volume set to ${volume}`);
-                    }
+                    songsDb.setVolume(volume);
+                    io.emit('volume', volume);
 
-                    // !nextsong / !ns
-                    if (
-                        message.startsWith('!nextsong') ||
-                        message.startsWith('!ns')
-                    ) {
-                        const song = songsDb.getSong();
-                        io.emit('song', JSON.stringify(song));
-
-                        client.say(
-                            channel,
-                            `Now playing ${song.title} added by ${song.user}`
-                        );
-
-                        songsDb.moveDownTheList(song);
-                        songsDb.resortList();
-                    }
-
-                    // !deletesong / !ds
-                    if (
-                        message.startsWith('!deletesong') ||
-                        message.startsWith('!ds')
-                    ) {
-                        const [command, songId] = message.split(' ');
-                        const song = songsDb.getSong(songId);
-                        songsDb.deleteSong(song);
-                        songsDb.resortList();
-
-                        client.say(
-                            channel,
-                            `${song.title} was deleted from the playlist`
-                        );
-                    }
+                    pubsub.emit('twitch.action.say', {
+                        channel,
+                        content: `Music volume set to ${volume}`,
+                    });
                 }
 
-                // !sr command
-                if (message.startsWith('!sr')) {
-                    const [command, link] = message.split(' ');
-                    if (link !== undefined) {
-                        let vid;
+                // !nextsong / !ns
+                if (
+                    message.startsWith('!nextsong') ||
+                    message.startsWith('!ns')
+                ) {
+                    const song = songsDb.getSong();
+                    const volume = songsDb.getVolume();
+                    io.emit('song', JSON.stringify({ song, volume }));
 
-                        if ((vid = youtube.getVideoId(link))) {
-                            if (!songsDb.getByVideoId(vid, 'youtube')) {
-                                const video = await youtube.getVideoInfo(link);
+                    pubsub.emit('twitch.action.say', {
+                        channel,
+                        content: `Now playing ${song.title} added by ${song.user}`,
+                    });
 
-                                songsDb.addSong({
-                                    vid: vid,
-                                    type: 'youtube',
-                                    title: video.title,
-                                    user: user['display-name'],
-                                });
+                    songsDb.setCurrentPlaying(song);
+                    songsDb.moveDownTheList(song);
+                    songsDb.resortList();
+                }
 
-                                client.say(
-                                    channel,
-                                    `${video.title} added to the music queue by ${user['display-name']}`
-                                );
+                // !deletesong / !ds
+                if (
+                    message.startsWith('!deletesong') ||
+                    message.startsWith('!ds')
+                ) {
+                    const [command, songId] = message.split(' ');
+                    let song;
 
-                                io.emit('list', JSON.stringify(songsDb.list()));
-                            }
-                        }
+                    if (songId === undefined) {
+                        song = songsDb.getCurrentPlaying();
                     } else {
-                        client.say(
-                            channel,
-                            'To request a song, use the following command: !sr [youtube link]'
-                        );
+                        song = songsDb.getSong(songId);
                     }
+                    songsDb.deleteSong(song);
+                    songsDb.resortList();
+
+                    pubsub.emit('twitch.action.say', {
+                        channel,
+                        content: `${song.title} was deleted from the playlist`,
+                    });
                 }
             }
-        );
+
+            // !song command
+            if (message.startsWith('!song')) {
+                const song = songsDb.getCurrentPlaying();
+
+                pubsub.emit('twitch.action.say', {
+                    channel,
+                    content: `Currently playing ${song.title} added to the music queue by ${song.user}`,
+                });
+            }
+
+            // !sr command
+            if (message.startsWith('!sr')) {
+                const [command, link] = message.split(' ');
+                if (link !== undefined) {
+                    let vid;
+
+                    if ((vid = youtube.getVideoId(link))) {
+                        if (!songsDb.getByVideoId(vid, 'youtube')) {
+                            const video = await youtube.getVideoInfo(link);
+
+                            songsDb.addSong({
+                                vid: vid,
+                                type: 'youtube',
+                                title: video.title,
+                                user: user['display-name'],
+                            });
+
+                            pubsub.emit('twitch.action.say', {
+                                channel,
+                                content: `${video.title} added to the music queue by ${user['display-name']}`,
+                            });
+
+                            io.emit('list', JSON.stringify(songsDb.list()));
+                        }
+                    }
+                } else {
+                    pubsub.emit('twitch.action.say', {
+                        channel,
+                        content:
+                            'To request a song, use the following command: !sr [youtube link]',
+                    });
+                }
+            }
+        });
     };
 })(module);

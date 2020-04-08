@@ -44,10 +44,12 @@ html
             }
 
             socket.on('song', function(data) {
-                var song = JSON.parse(data);
+                var data = JSON.parse(data);
 
-                player.loadVideoById(song.vid)
+                player.loadVideoById(data.song.vid)
+                player.setVolume(data.volume);
                 player.playVideo();
+                socket.emit('getCurrentNext');
             });
 
             socket.on('volume', function(volume) {
